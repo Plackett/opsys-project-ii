@@ -1,0 +1,1 @@
+savedcmd_syscheck.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /usr/src/linux-6.16.12/scripts/module.lds -o syscheck.ko syscheck.o syscheck.mod.o .module-common.o
