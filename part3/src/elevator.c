@@ -3,6 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
 #include <linux/list.h>
+#include <linux/slab.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cop4610t");
@@ -19,14 +20,15 @@ int stop_elevator(void);                                                        
 
 enum ElevatorState {
 	OFFLINE, // elevator isn't running (initial state)
-	DEACTIVATING, // elevator is in the process of deactivating
 	IDLE, // elevator is stopped on a floor without a pet to service
 	LOADING, // elevator is stopped on a floor to load/unload pets
 	UP, // elevator is going up
 	DOWN, // elevator is going down
 };
 
-ElevatorState currentState = ElevatorState.OFFLINE;
+bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
+
+enum ElevatorState currentState = ElevatorState.OFFLINE; // current state of elevator defaults to OFFLINE
 
 extern int (*STUB_start_elevator)(void);
 extern int (*STUB_issue_request)(int,int,int);
@@ -34,68 +36,100 @@ extern int (*STUB_stop_elevator)(void);
 
 static struct proc_dir_entry *proc_entry;
 
+// this enum stores pet types by their weight on the elevator
 enum PetType { CHIHUAHUA = 3, PUG = 14, PUGHUAHUA = 10, DACHSHUND = 16 };
 
 struct Pet {
-	struct list_head node;
-	PetType type;
+	struct list_head node; // this is from list.h and just has two list_heads of its own, one for prev and one for next
+	enum PetType type;
 	int dest;
 };
 
-struct Pet floors[6]; // floors[0-4] is floors 1-5  and floors[5] is the elevator
-
-int start_elevator(void) {
-    if(currentState != OFFLINE) return 1;
-	for(int i = 0; i < 6; ++i) {
-		INIT_LIST_HEAD(&(floors[i]));
-	}
-	currentState = IDLE;
-    return 0;
+// structure that just keeps a linked list and additional info
+struct pet_list {
+	struct list_head head;
+	int size = 0;
+	int weight = 0;
+	int floor = 1;
 }
 
+struct pet_list floor[6]; // floors[1-5] is floors 1-5  and floors[0] is the elevator
+#define elevator floor[0];
+
+// start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
+// it also resets the deactivating flag to false
+int start_elevator(void) {
+    if(currentState != OFFLINE) return 1;
+	
+	INIT_LIST_HEAD(&elevator.head);
+
+	if(elevator.head.prev == NULL || elevator.head.next == NULL) return -ENOMEM;
+
+	currentState = IDLE;
+	deactivating = false;
+	elevator.floor = 1;
+	elevator.size = 0;
+	elevator.weight = 0;
+    
+	return 0;
+}
+
+// issue request adds a pet to the list for that floor it is on and stores their destination and pet type
+// kmalloc could potentially fail here
 int issue_request(int start_floor, int destination_floor, int type) {
-    Pet* pet;
-    pet = kmalloc(sizeof(Pet), _GFP_RECLAIM);
+	if(start_floor < 1 || start_floor > 5 || destination_floor < 1 || destination_floor > 5 || type < 0 || type > 3) return 1;
+    struct Pet* pet;
+    pet = kmalloc(sizeof(struct Pet), GFP_KERNEL);
+	if(pet == NULL) return -ENOMEM; // failed memory initailizations should return ENOMEM
     switch(type) {
         case 0:
-		pet->type = PetType.CHIHUAHUA;
+		pet->type = CHIHUAHUA;
 		break;
 	case 1:
-		pet->type = PetType.PUG;
+		pet->type = PUG;
 		break;
 	case 2:
-		pet->type = PetType.PUGHUAHUA;
+		pet->type = PUGHUAHUA;
 		break;
 	case 3:
-		pet->type = PetType.DACHSHUND;
+		pet->type = DACHSHUND;
 		break;
     }
     pet->dest = destination_floor;
-    list_add_tail(&pet->list, &(floors[start_floor-1]));
+	// void list_add_tail(struct list_head *new, struct list_head *head);
+    list_add_tail(&pet->node, &floors[start_floor].head);
+	floors[start_floor].size++;
     return 0;
 }
 
+// stop elevator just triggers the deactivating flag and returns an error(1) if its already deactivating when called
+// if the elevator is already offline it won't do anything
 int stop_elevator(void) {
-	if(currentState == DEACTIVATING) return 1;
+	if(deactivating == true) return 1;
 	if(currentState == OFFLINE) return 0;
-	for(int i = 0; i < 6; i++) {
-		if(floors[i] == nullptr) continue;
-		struct Pet *temp;
 
-		list_for_each_entry_safe(item, temp, &(floors[i]), node) {
-			list_del(&item->node);
-			kfree(item);
-		}
-	}
+	deactivating = true;
 
     return 0;
 }
 
+// prints out information to proc file provided
+static int elevator_print(struct seq_file *output) {
+
+}
+
+// kernel module entry function
+// initializes the linked lists for every floor
 static int __init elevator_init(void) {
     proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
     if (proc_entry == NULL) {
         return -ENOMEM;
     }
+
+	for(int i = 1; i < 6; ++i) {
+		// void INIT_LIST_HEAD(struct list_head *list);
+		INIT_LIST_HEAD(&floors[i].head);
+	}
 
     STUB_start_elevator = start_elevator;
 	STUB_issue_request = issue_request;
@@ -103,11 +137,26 @@ static int __init elevator_init(void) {
     return 0;  // Return 0 to indicate successful loading
 }
 
+// kernel module exit function
+// frees all of the floor lists and exits safely
 static void __exit elevator_exit(void) {
+	struct Pet *item, *temp;
+
     proc_remove(proc_entry);
+	
 	STUB_start_elevator = NULL;
 	STUB_issue_request = NULL;
 	STUB_stop_elevator = NULL;
+
+	for(int i = 0; i < 6; i++) {
+
+		// list_for_each_entry_safe(struct list_head* pos, struct list_head* head, member);
+		list_for_each_entry_safe(item, temp, &floors[i].head, node) {
+			// void list_del(struct list_head *entry);
+			list_del(&item->node);
+			kfree(item);
+		}
+	}
 }
 
 module_init(elevator_init);  // Specify the initialization function
