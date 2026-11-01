@@ -7,8 +7,8 @@ KDIR := /lib/modules/$(shell uname -r)/build
 all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 	
-elevator.o: elevator.c
-	gcc -c elevator.c
+elevator.o: src/elevator.c
+	gcc -c build/elevator.c
 
 clean: 
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
