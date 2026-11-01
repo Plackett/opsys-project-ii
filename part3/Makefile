@@ -3,6 +3,10 @@
 obj-m += elevator.o
 ccflags-y := -g -Wno-error
 KDIR := /lib/modules/$(shell uname -r)/build
+
+elevator.o: 
+	gcc -c elevator.c
+
 all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
