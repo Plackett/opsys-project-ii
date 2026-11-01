@@ -100,7 +100,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
     pet->dest = destination_floor;
 	// void list_add_tail(struct list_head *new, struct list_head *head);
     list_add_tail(&pet->node, &floors[start_floor].head);
-	floors[start_floor].size++;
+	floor[start_floor].size++;
     return 0;
 }
 
