@@ -61,7 +61,7 @@ struct Elevator {
 
 struct Elevator elevator;
 
-struct pet_list floor[6]; // floors[1-5] is floors 1-5  and floors[0] is the elevator
+struct pet_list floor[6]; // floor[1-5] is floors 1-5  and floor[0] is the elevator
 
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
@@ -107,7 +107,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
 // stop elevator just triggers the deactivating flag and returns an error(1) if its already deactivating when called
 // if the elevator is already offline it won't do anything
 int stop_elevator(void) {
-	if(elevator.state == true) return 1;
+	if(elevator.deactivating == true) return 1;
 	if(elevator.state == OFFLINE) return 0;
 
 	deactivating = true;
@@ -124,9 +124,9 @@ static int elevator_print(struct seq_file *output) {
 // initializes the linked lists for every floor
 static int __init elevator_init(void) {
     elevator.size = 0;
-    elevator.wieght = 0;
+    elevator.weight = 0;
     elevator.floor = 1;
-    elevator.deactivating = flase;
+    elevator.deactivating = false;
     elevator.state = OFFLINE;
     proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
     if (proc_entry == NULL) {
@@ -135,7 +135,7 @@ static int __init elevator_init(void) {
 
 	for(int i = 1; i < 6; ++i) {
 		// void INIT_LIST_HEAD(struct list_head *list);
-		INIT_LIST_HEAD(&floors[i].head);
+		INIT_LIST_HEAD(&floor[i].head);
 	}
 
     STUB_start_elevator = start_elevator;
@@ -158,7 +158,7 @@ static void __exit elevator_exit(void) {
 	for(int i = 0; i < 6; i++) {
 
 		// list_for_each_entry_safe(struct list_head* pos, struct list_head* head, member);
-		list_for_each_entry_safe(item, temp, &floors[i].head, node) {
+		list_for_each_entry_safe(item, temp, &floor[i].head, node) {
 			// void list_del(struct list_head *entry);
 			list_del(&item->node);
 			kfree(item);
