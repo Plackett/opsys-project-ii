@@ -60,7 +60,7 @@ struct Elevator {
 
 struct Elevator elevator;
 
-char* state_as_string() {
+char* state_as_string(void) {
     switch(elevator.state) {
         case OFFLINE:
             return "OFFLINE";
