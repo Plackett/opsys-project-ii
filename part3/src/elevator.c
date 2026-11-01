@@ -48,8 +48,6 @@ enum ElevatorState {
 	DOWN, // elevator is going down
 };
 
-bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
-
 struct Elevator {
     enum ElevatorState state;
     struct list_head head;
@@ -110,7 +108,7 @@ int stop_elevator(void) {
 	if(elevator.deactivating == true) return 1;
 	if(elevator.state == OFFLINE) return 0;
 
-	deactivating = true;
+	elevator.deactivating = true;
 
     return 0;
 }
