@@ -117,7 +117,7 @@ int stop_elevator(void) {
 
 // prints out information to proc file provided
 // TODO this function :)
-static ssize_t procfile_read(struct file* file, char * ubuf, size_t count, loff_t *ppos)
+static ssize_t procfile_read(struct file* file, char * ubuf, size_t count, loff_t *ppos) {
     return 0;
 }
 
