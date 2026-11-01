@@ -116,8 +116,9 @@ int stop_elevator(void) {
 }
 
 // prints out information to proc file provided
+// TODO this function :)
 static int elevator_print(struct seq_file *output) {
-
+    return 0
 }
 
 // kernel module entry function
