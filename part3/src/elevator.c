@@ -117,9 +117,13 @@ int stop_elevator(void) {
 
 // prints out information to proc file provided
 // TODO this function :)
-static int elevator_print(struct seq_file *output) {
+static ssize_t procfile_read(struct file* file, char * ubuf, size_t count, loff_t *ppos)
     return 0;
 }
+
+static const struct proc_ops procfile_fops = {
+    .proc_read = procfile_read,
+};
 
 // kernel module entry function
 // initializes the linked lists for every floor
