@@ -62,7 +62,6 @@ struct Elevator {
 struct Elevator elevator;
 
 struct pet_list floor[6]; // floors[1-5] is floors 1-5  and floors[0] is the elevator
-#define elevator floor[0];
 
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
