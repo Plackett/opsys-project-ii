@@ -18,17 +18,6 @@ int start_elevator(void);                                                       
 int issue_request(int start_floor, int destination_floor, int type);                // add passengers requests to specific floors
 int stop_elevator(void);                                                            // stops the elevator
 
-enum ElevatorState {
-	OFFLINE, // elevator isn't running (initial state)
-	IDLE, // elevator is stopped on a floor without a pet to service
-	LOADING, // elevator is stopped on a floor to load/unload pets
-	UP, // elevator is going up
-	DOWN, // elevator is going down
-};
-
-bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
-
-enum ElevatorState currentState = OFFLINE; // current state of elevator defaults to OFFLINE
 
 extern int (*STUB_start_elevator)(void);
 extern int (*STUB_issue_request)(int,int,int);
@@ -48,10 +37,31 @@ struct Pet {
 // structure that just keeps a linked list and additional info
 struct pet_list {
 	struct list_head head;
-	int size = 0;
-	int weight = 0;
-	int floor = 1;
-}
+	int size;
+};
+
+enum ElevatorState {
+	OFFLINE, // elevator isn't running (initial state)
+	IDLE, // elevator is stopped on a floor without a pet to service
+	LOADING, // elevator is stopped on a floor to load/unload pets
+	UP, // elevator is going up
+	DOWN, // elevator is going down
+};
+
+bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
+
+enum ElevatorState elevator.state = OFFLINE; // current state of elevator defaults to OFFLINE
+                                           
+struct Elevator {
+    enum ElevatorState state;
+    struct list_head head;
+    int size;
+    int weight;
+    int floor;
+    bool deactivating;
+};
+
+struct Elevator elevator;
 
 struct pet_list floor[6]; // floors[1-5] is floors 1-5  and floors[0] is the elevator
 #define elevator floor[0];
@@ -59,18 +69,13 @@ struct pet_list floor[6]; // floors[1-5] is floors 1-5  and floors[0] is the ele
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
 int start_elevator(void) {
-    if(currentState != OFFLINE) return 1;
+    if(elevator.state != OFFLINE) return 1;
 	
 	INIT_LIST_HEAD(&elevator.head);
 
 	if(elevator.head.prev == NULL || elevator.head.next == NULL) return -ENOMEM;
 
-	currentState = IDLE;
-	deactivating = false;
-	elevator.floor = 1;
-	elevator.size = 0;
-	elevator.weight = 0;
-    
+	elevator.state = IDLE;
 	return 0;
 }
 
@@ -105,8 +110,8 @@ int issue_request(int start_floor, int destination_floor, int type) {
 // stop elevator just triggers the deactivating flag and returns an error(1) if its already deactivating when called
 // if the elevator is already offline it won't do anything
 int stop_elevator(void) {
-	if(deactivating == true) return 1;
-	if(currentState == OFFLINE) return 0;
+	if(elevator.state == true) return 1;
+	if(elevator.state == OFFLINE) return 0;
 
 	deactivating = true;
 
@@ -121,6 +126,11 @@ static int elevator_print(struct seq_file *output) {
 // kernel module entry function
 // initializes the linked lists for every floor
 static int __init elevator_init(void) {
+    elevator.size = 0;
+    elevator.wieght = 0;
+    elevator.floor = 1;
+    elevator.deactivating = flase;
+    elevator.state = OFFLINE;
     proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
     if (proc_entry == NULL) {
         return -ENOMEM;
