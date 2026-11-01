@@ -50,8 +50,6 @@ enum ElevatorState {
 
 bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
 
-enum ElevatorState elevator.state = OFFLINE; // current state of elevator defaults to OFFLINE
-                                           
 struct Elevator {
     enum ElevatorState state;
     struct list_head head;
