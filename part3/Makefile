@@ -8,7 +8,7 @@ all:
 	$(MAKE) -C $(KDIR) M=$(PWD) modules
 	
 elevator.o: src/elevator.c
-	gcc -c build/elevator.c
+	gcc -c src/elevator.c
 
 clean: 
 	$(MAKE) -C $(KDIR) M=$(PWD) clean
