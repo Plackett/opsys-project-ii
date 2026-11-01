@@ -28,7 +28,7 @@ enum ElevatorState {
 
 bool deactivating = false; // this flag signals the elevator to not take any more new pets and unload the ones it has
 
-enum ElevatorState currentState = ElevatorState.OFFLINE; // current state of elevator defaults to OFFLINE
+enum ElevatorState currentState = OFFLINE; // current state of elevator defaults to OFFLINE
 
 extern int (*STUB_start_elevator)(void);
 extern int (*STUB_issue_request)(int,int,int);
