@@ -127,7 +127,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
     // void list_add_tail(struct list_head *new, struct list_head *head);
 
     // Wait until lock aquired
-    while(!mutex_lock_interruptible(&floor[i].mutex)) {}
+    while(!mutex_lock_interruptible(&floor[start_floor].mutex)) {}
 
     floor[i] list_add_tail(&pet->node, &floor[start_floor].head);
     floor[start_floor].size++;
