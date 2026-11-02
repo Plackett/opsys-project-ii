@@ -92,11 +92,18 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
+            // Check if need to unload
             if(p->dest == elevator->floor) {
                 loading = true;
                 elevator->state = LOADING;
                 list_del(&p->node);
                 kfree(p);
+                elevator->size--;
+            }
+            // Check if can keep scanning in the current direction
+            else if ( (elevator->scan == UP && elevator->floor < p->dest) 
+                    ||(elevator->scan == down && elevator->floor > p->dest)) {
+                continue_scanning = true;
             }
         }
         mutex_unlock(&elevator->mutex);
