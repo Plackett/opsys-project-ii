@@ -4,6 +4,8 @@
 #include <linux/proc_fs.h>
 #include <linux/list.h>
 #include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/kthread.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cop4610t");
@@ -18,7 +20,6 @@ MODULE_VERSION("0.1");
 int start_elevator(void);                                                           // starts the elevator to pick up and drop off passengers
 int issue_request(int start_floor, int destination_floor, int type);                // add passengers requests to specific floors
 int stop_elevator(void);                                                            // stops the elevator
-
 
 extern int (*STUB_start_elevator)(void);
 extern int (*STUB_issue_request)(int,int,int);
@@ -38,9 +39,11 @@ struct Pet {
 // structure that just keeps a linked list and additional info
 struct pet_list {
     struct list_head head;
+    struct mutex mutex;
     int size;    // size of the list
     int C,D,P,H; // count of each type of pet in the list
 };
+struct pet_list floor[6]; // floor[1-5] is floors 1-5  and floor[0] is the elevator
 
 enum ElevatorState {
     OFFLINE, // elevator isn't running (initial state)
@@ -53,12 +56,13 @@ enum ElevatorState {
 struct Elevator {
     enum ElevatorState state;
     struct list_head head;
+    struct task_struct* kthread;
+    struct mutex mutex;
     int size;
     int weight;
     int floor;
     bool deactivating;
 };
-
 struct Elevator elevator;
 
 char* state_as_string(void) {
@@ -76,7 +80,11 @@ char* state_as_string(void) {
     };
 }
 
-struct pet_list floor[6]; // floor[1-5] is floors 1-5  and floor[0] is the elevator
+int thread_run_elevator(void* param) {
+    struct elevator* elevator = param;
+    while(!kthread_should_stop()) {
+    }
+}
 
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
@@ -84,10 +92,9 @@ int start_elevator(void) {
     if(elevator.state != OFFLINE) return 1;
 
     INIT_LIST_HEAD(&elevator.head);
-
-    if(elevator.head.prev == NULL || elevator.head.next == NULL) return -ENOMEM;
-
     elevator.state = IDLE;
+    elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
+
     return 0;
 }
 
@@ -118,8 +125,14 @@ int issue_request(int start_floor, int destination_floor, int type) {
     }
     pet->dest = destination_floor;
     // void list_add_tail(struct list_head *new, struct list_head *head);
-    list_add_tail(&pet->node, &floor[start_floor].head);
+
+    // Wait until lock aquired
+    while(!mutex_lock_interruptible(&floor[i].mutex)) {}
+
+    floor[i] list_add_tail(&pet->node, &floor[start_floor].head);
     floor[start_floor].size++;
+
+    mutex_unlock(&floor[i].mutex);
     return 0;
 }
 
@@ -158,16 +171,15 @@ static const struct proc_ops procfile_fops = {
 // kernel module entry function
 // initializes the linked lists for every floor
 static int __init elevator_init(void) {
+    // Initialize elevator
     elevator.size = 0;
     elevator.weight = 0;
     elevator.floor = 1;
     elevator.deactivating = false;
     elevator.state = OFFLINE;
-    proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
-    if (proc_entry == NULL) {
-        return -ENOMEM;
-    }
+    mutex_init(&elevator.mutex);
 
+    // Initialize floors
     for(int i = 1; i < 6; ++i) {
         // void INIT_LIST_HEAD(struct list_head *list);
         INIT_LIST_HEAD(&floor[i].head);
@@ -175,11 +187,12 @@ static int __init elevator_init(void) {
         floor[i].D = 0;
         floor[i].P = 0;
         floor[i].H = 0;
+        mutex_init(&floor[i].mutex)
     }
 
-    STUB_start_elevator = start_elevator;
-    STUB_issue_request = issue_request;
-    STUB_stop_elevator = stop_elevator;
+    proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
+    if (proc_entry == NULL) return -ENOMEM;
+
     return 0;  // Return 0 to indicate successful loading
 }
 
