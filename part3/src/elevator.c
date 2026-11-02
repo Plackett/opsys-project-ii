@@ -81,6 +81,9 @@ char* state_as_string(void) {
     return "ERR";
 }
 
+ElevatorState elevator_algorithm(Elevator* elevator) {
+}
+
 int thread_run_elevator(void* param) {
     struct elevator* elevator = param;
     while(!kthread_should_stop()) {
