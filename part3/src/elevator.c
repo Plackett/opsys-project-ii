@@ -78,6 +78,7 @@ char* state_as_string(void) {
         case DOWN:
             return "DOWN";
     };
+    return "ERR"
 }
 
 int thread_run_elevator(void* param) {
