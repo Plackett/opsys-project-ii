@@ -15,7 +15,7 @@ MODULE_VERSION("0.1");
 #define ENTRY_NAME "elevator"
 #define PERMS 0444
 #define PARENT NULL
-#define MAX_LEN 10000
+#define BUF_SIZE 10000
 
 int start_elevator(void);                                                           // starts the elevator to pick up and drop off passengers
 int issue_request(int start_floor, int destination_floor, int type);                // add passengers requests to specific floors
@@ -151,7 +151,7 @@ static ssize_t procfile_read(struct file* file,
         char* ubuf,
         size_t count, 
         loff_t* ppos) {
-    char buffer[BUF_LEN];
+    char buffer[BUF_SIZE];
     int len = 0;
     struct pet_count petinfo[6];
     for (int i = 1; i <= 5; i++) {
