@@ -78,14 +78,14 @@ char* state_as_string(void) {
         case DOWN:
             return "DOWN";
     };
-    return "ERR"
+    return "ERR";
 }
 
 int thread_run_elevator(void* param) {
     struct elevator* elevator = param;
     while(!kthread_should_stop()) {
     }
-    return 0
+    return 0;
 }
 
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
