@@ -6,6 +6,7 @@
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/kthread.h>
+#include <linux/delay.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cop4610t");
@@ -55,6 +56,7 @@ enum ElevatorState {
 
 struct Elevator {
     enum ElevatorState state;
+    enum ElevatorState scan; // stores the SCAN direction
     struct list_head head;
     struct task_struct* kthread;
     struct mutex mutex;
@@ -81,9 +83,30 @@ char* state_as_string(void) {
     return "ERR";
 }
 
+// Tells the elevator what to do next
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
+    bool continue_scanning = false;
+    if(elevator->size != 0) {
+        struct Pet *p, *dummy;
+        bool loading = false;
+        
+        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+        list_for_each_entry_safe(p,dummy,&elevator->head, node) {
+            if(p->dest == elevator->floor) {
+                loading = true;
+                elevator->state = LOADING;
+                list_del(&p);
+                kfree(p);
+            }
+        }
+        mutex_unlock(&elevator->mutex);
+        if(loading) ssleep(1);
+    }
+    for(int i = 1; i <= 5; i++) {
+    }
 }
 
+// The function ran by kthread_run, main elevator loop
 int thread_run_elevator(void* param) {
     struct elevator* elevator = param;
     while(!kthread_should_stop()) {
@@ -184,6 +207,7 @@ static int __init elevator_init(void) {
     elevator.floor = 1;
     elevator.deactivating = false;
     elevator.state = OFFLINE;
+    elevator.scan = UP;
     mutex_init(&elevator.mutex);
 
     // Initialize floors
