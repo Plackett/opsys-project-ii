@@ -129,7 +129,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
     // Wait until lock aquired
     while(!mutex_lock_interruptible(&floor[start_floor].mutex)) {;}
 
-    floor[start_floor] list_add_tail(&pet->node, &floor[start_floor].head);
+    list_add_tail(&pet->node, &floor[start_floor].head);
     floor[start_floor].size++;
 
     mutex_unlock(&floor[start_floor].mutex);
