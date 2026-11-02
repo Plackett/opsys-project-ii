@@ -81,7 +81,7 @@ char* state_as_string(void) {
     return "ERR";
 }
 
-ElevatorState elevator_algorithm(Elevator* elevator) {
+enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
 }
 
 int thread_run_elevator(void* param) {
