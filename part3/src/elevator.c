@@ -189,7 +189,7 @@ static int __init elevator_init(void) {
         floor[i].D = 0;
         floor[i].P = 0;
         floor[i].H = 0;
-        mutex_init(&floor[i].mutex)
+        mutex_init(&floor[i].mutex);
     }
 
     proc_entry = proc_create(ENTRY_NAME, PERMS, PARENT, &procfile_fops);
