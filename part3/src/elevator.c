@@ -153,6 +153,7 @@ static ssize_t procfile_read(struct file* file,
         loff_t* ppos) {
     char buffer[BUF_SIZE];
     int len = 0;
+    /*
     struct pet_count petinfo[6];
     for (int i = 1; i <= 5; i++) {
         // initialize values
@@ -160,8 +161,9 @@ static ssize_t procfile_read(struct file* file,
     }
     snprintf(buffer, sizeof(buffer), "Elevator state: <state> Current floor: <floor> Current load: <weight> lbs Elevator status: ")
         //C<num_c> D<num_d> P<num_p> H<num_h> [<f5?>] Floor 5: <peton5> H3 [ ] Floor 4: 0 [*] Floor 3: 2 P5 C1 [ ] Floor 2: 1 D4 [ ] Floor 1: 0 Number of pets: 4 Number of pets waiting: 4 <waiting> Number of pets serviced: <serviced>")
+    */
 
-        return 0;
+    return 0;
 }
 
 static const struct proc_ops procfile_fops = {
