@@ -95,7 +95,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
             if(p->dest == elevator->floor) {
                 loading = true;
                 elevator->state = LOADING;
-                list_del(&p);
+                list_del(&p->node);
                 kfree(p);
             }
         }
