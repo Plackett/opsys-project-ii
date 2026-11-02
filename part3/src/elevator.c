@@ -38,7 +38,8 @@ struct Pet {
 // structure that just keeps a linked list and additional info
 struct pet_list {
     struct list_head head;
-    int size;
+    int size;    // size of the list
+    int C,D,P,H; // count of each type of pet in the list
 };
 
 enum ElevatorState {
@@ -100,15 +101,19 @@ int issue_request(int start_floor, int destination_floor, int type) {
     switch(type) {
         case 0:
             pet->type = CHIHUAHUA;
+            floor[start_floor].C++;
             break;
         case 1:
             pet->type = PUG;
+            floor[start_floor].P++;
             break;
         case 2:
             pet->type = PUGHUAHUA;
+            floor[start_floor].H++;
             break;
         case 3:
             pet->type = DACHSHUND;
+            floor[start_floor].D++;
             break;
     }
     pet->dest = destination_floor;
@@ -123,23 +128,25 @@ int issue_request(int start_floor, int destination_floor, int type) {
 int stop_elevator(void) {
     if(elevator.deactivating == true) return 1;
     if(elevator.state == OFFLINE) return 0;
-
     elevator.deactivating = true;
-
     return 0;
 }
 
-// prints out information to proc file provided
 // TODO this function :)
+// called when reading /proc/elevator
 static ssize_t procfile_read(struct file* file, 
         char* ubuf,
         size_t count, 
         loff_t* ppos) {
     char buffer[BUF_LEN];
     int len = 0;
+    struct pet_count petinfo[6];
+    for (int i = 1; i <= 5; i++) {
+        // initialize values
+        pet_list* f;
+    }
     snprintf(buffer, sizeof(buffer), "Elevator state: <state> Current floor: <floor> Current load: <weight> lbs Elevator status: ")
         //C<num_c> D<num_d> P<num_p> H<num_h> [<f5?>] Floor 5: <peton5> H3 [ ] Floor 4: 0 [*] Floor 3: 2 P5 C1 [ ] Floor 2: 1 D4 [ ] Floor 1: 0 Number of pets: 4 Number of pets waiting: 4 <waiting> Number of pets serviced: <serviced>")
-
 
         return 0;
 }
@@ -164,6 +171,10 @@ static int __init elevator_init(void) {
     for(int i = 1; i < 6; ++i) {
         // void INIT_LIST_HEAD(struct list_head *list);
         INIT_LIST_HEAD(&floor[i].head);
+        floor[i].C = 0;
+        floor[i].D = 0;
+        floor[i].P = 0;
+        floor[i].H = 0;
     }
 
     STUB_start_elevator = start_elevator;
