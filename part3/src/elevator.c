@@ -96,7 +96,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         // ...check if pets in elevator...
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
-            // ...need to unload
+            // ...need to unload?
             if(p->dest == elevator->floor) {
                 unloaded = true;
                 elevator->state = LOADING;
@@ -104,7 +104,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                 kfree(p);
                 elevator->size--;
             }
-            // ...need elevator to keep scanning
+            // ...need elevator to keep scanning?
             else if ( (elevator->scan == UP && elevator->floor < p->dest) 
                     ||(elevator->scan == DOWN && elevator->floor > p->dest)) {
                 continue_scanning = true;
@@ -112,7 +112,11 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         }
         mutex_unlock(&elevator->mutex);
     }
+    // Check remaining floors in scan direction (including current floor)
     for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+        if(floor[i].size != 0) {
+            struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
+        }
     }
     if (elevator->state == LOADING) ssleep(1);
 }
