@@ -293,29 +293,29 @@ static ssize_t procfile_read(struct file* file,
     for(int i = 1; i <= 5; i++)
         while(mutex_lock_interruptible(&floor[i].mutex)) {;}
 
-    str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string()) - 1;
-    str += snprintf(str, buf_left(), " Current floor: %d", elevator.floor) - 1;
-    str += snprintf(str, buf_left(), " Current load: %d lbs", elevator.weight) - 1;
-    str += snprintf(str, buf_left(), " Elevator status:") - 1;
+    str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string());
+    str += snprintf(str, buf_left(), " Current floor: %d", elevator.floor);
+    str += snprintf(str, buf_left(), " Current load: %d lbs", elevator.weight);
+    str += snprintf(str, buf_left(), " Elevator status:");
     list_for_each_entry(p, &elevator.head, node) {
-        str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest) - 1;
+        str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
         pets++;
     }
     for(int i = 1; i <= 5; i++) {
         pets_waiting += floor[i].size;
         if(buf_left() > 0)
             str += snprintf(str, buf_left(), " [%c] Floor %d: %d",
-                    elevator.floor == i ? '*' : ' ', i, floor[i].size) - 1;
+                    elevator.floor == i ? '*' : ' ', i, floor[i].size);
         list_for_each_entry(p, &floor[i].head, node)
             if(buf_left() > 0)
-                str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest) - 1;
+                str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
     }
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets: %d", pets) - 1;
+        str += snprintf(str, buf_left(), " Number of pets: %d", pets);
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets waiting: %d", pets_waiting) - 1;
+        str += snprintf(str, buf_left(), " Number of pets waiting: %d", pets_waiting);
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets serviced: %d\0", elevator.serviced) - 1;
+        str += snprintf(str, buf_left(), " Number of pets serviced: %d", elevator.serviced);
 
     //copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
     copy_to_user(ubuf, buffer, 100);
