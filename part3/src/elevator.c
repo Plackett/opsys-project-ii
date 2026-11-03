@@ -177,7 +177,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
 // The function ran by kthread_run, main elevator loop
 int thread_run_elevator(void* param) {
     struct Elevator* elevator = param;
-    while( !(elevator->deactivating && elevator->size == 0) ) {
+    while( !(kthread_should_stop() && elevator->size == 0) ) {
         enum ElevatorState new_state = elevator_algorithm(elevator);
 
         // Set new state
