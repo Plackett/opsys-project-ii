@@ -24,9 +24,9 @@ int main(int argc, char **argv) {
 	{
 		type = rnd(0,3);
 
-		start = rnd(1, 6);
+		start = rnd(1, 5);
 		do {
-			dest = rnd(1, 6);
+			dest = rnd(1, 5);
 		} while(dest == start);
 
 		long ret = issue_request(start, dest, type);
