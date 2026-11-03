@@ -7,6 +7,7 @@
 #include <linux/mutex.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
+#include <linux/string.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("cop4610t");
@@ -62,28 +63,10 @@ struct Elevator {
     struct list_head head;
     struct task_struct* kthread;
     struct mutex mutex;
-    int size;
-    int weight;
-    int floor;
+    int size, weight, floor, serviced;
     bool deactivating;
 };
 struct Elevator elevator;
-
-char* state_as_string(void) {
-    switch(elevator.state) {
-        case OFFLINE:
-            return "OFFLINE";
-        case IDLE:
-            return "IDLE";
-        case LOADING:
-            return "LOADING";
-        case UP:
-            return "UP";
-        case DOWN:
-            return "DOWN";
-    };
-    return "ERR";
-}
 
 // Tells the elevator to go up, down, or to idle.
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
@@ -104,6 +87,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                 elevator->state = LOADING;
                 elevator->size--;
                 elevator->weight -= p->type;
+                elevator->serviced++;
                 list_del(&p->node);
                 kfree(p);
             }
@@ -171,7 +155,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                     next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
                 // ...then pick up pets
                 elevator->state = LOADING;
-                list_move(&p->node, &elevator->head);
+                list_move_tail(&p->node, &elevator->head);
                 floor[elevator->floor].size--;
                 elevator->weight += p->type;
                 elevator->size++;
@@ -261,24 +245,52 @@ int stop_elevator(void) {
     return 0;
 }
 
-// TODO this function :)
+char* state_as_string(void) {
+    switch(elevator.state) {
+        case OFFLINE:
+            return "OFFLINE";
+        case IDLE:
+            return "IDLE";
+        case LOADING:
+            return "LOADING";
+        case UP:
+            return "UP";
+        case DOWN:
+            return "DOWN";
+    };
+    return "ERR";
+}
+
 // called when reading /proc/elevator
 static ssize_t procfile_read(struct file* file, 
         char* ubuf,
         size_t count, 
         loff_t* ppos) {
     char buffer[BUF_SIZE];
-    int len = 0;
-    /*
-    struct pet_count petinfo[6];
-    for (int i = 1; i <= 5; i++) {
-        // initialize values
-        pet_list* f;
-    }
-    snprintf(buffer, sizeof(buffer), "Elevator state: <state> Current floor: <floor> Current load: <weight> lbs Elevator status: ")
-        //C<num_c> D<num_d> P<num_p> H<num_h> [<f5?>] Floor 5: <peton5> H3 [ ] Floor 4: 0 [*] Floor 3: 2 P5 C1 [ ] Floor 2: 1 D4 [ ] Floor 1: 0 Number of pets: 4 Number of pets waiting: 4 <waiting> Number of pets serviced: <serviced>")
-    */
+    char* str = buffer;
+    int len() {str - buffer};
 
+    while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+    for(int i = 1; i <= 5; i++)
+        while(!mutex_lock_interruptible(&floor[i]->mutex)) {;}
+
+    str += snprintf(str, ) - 1
+    
+
+    "Elevator state: <>";
+    " Current floor: <>";
+    " Current load: <> lbs;
+    " Elevator status:";
+    " CDPH";
+    " [<>] Floor <>: <num>";
+    " CDPH";
+    " Number of pets:";
+    " Numer of pets waiting: <>";
+    " Number of pets serviced: <>";
+
+    mutex_unlock(&elevator->mutex);
+    for(int i = 1; i <= 5; i++)
+        mutex_unlock(&floor[i]->mutex);
     return 0;
 }
 
@@ -292,6 +304,7 @@ static int __init elevator_init(void) {
     // Initialize elevator
     elevator.size = 0;
     elevator.weight = 0;
+    elevator.serviced = 0;
     elevator.floor = 1;
     elevator.deactivating = false;
     elevator.state = OFFLINE;
@@ -327,7 +340,7 @@ static void __exit elevator_exit(void) {
     STUB_issue_request = NULL;
     STUB_stop_elevator = NULL;
 
-    for(int i = 0; i < 6; i++) {
+    for(int i = 1; i < 6; i++) {
 
         // list_for_each_entry_safe(struct list_head* pos, struct list_head* head, member);
         list_for_each_entry_safe(item, temp, &floor[i].head, node) {
