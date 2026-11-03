@@ -110,8 +110,10 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         }
         mutex_unlock(&elevator->mutex);
     }
+
     // If stopping, don't consider other factors.
     if(kthread_should_stop()){
+        if(elevator->state == LOADING) ssleep(1);
         if(elevator->size == 0)
             return IDLE;
         else
@@ -185,7 +187,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
 // The function ran by kthread_run, main elevator loop
 int thread_run_elevator(void* param) {
     struct Elevator* elevator = param;
-    while(!kthread_should_stop()) {
+    while(!kthread_should_stop() || elevator->size != 0) {
         enum ElevatorState new_state = elevator_algorithm(elevator);
 
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
@@ -194,6 +196,9 @@ int thread_run_elevator(void* param) {
 
         ssleep(2);
     }
+    while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+    elevator->state = OFFLINE;
+    mutex_unlock(&elevator->mutex);
     return 0;
 }
 
@@ -202,7 +207,6 @@ int thread_run_elevator(void* param) {
 int start_elevator(void) {
     if(elevator.state != OFFLINE) return 1;
 
-    INIT_LIST_HEAD(&elevator.head);
     elevator.state = IDLE;
     elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
 
@@ -293,6 +297,7 @@ static int __init elevator_init(void) {
     elevator.state = OFFLINE;
     elevator.scan = UP;
     mutex_init(&elevator.mutex);
+    INIT_LIST_HEAD(&elevator.head);
 
     // Initialize floors
     for(int i = 1; i < 6; ++i) {
