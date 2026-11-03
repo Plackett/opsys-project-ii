@@ -280,6 +280,8 @@ static ssize_t procfile_read(struct file* file,
         char* ubuf,
         size_t count, 
         loff_t* ppos) {
+    if(*ppos > 0)
+        return 0;
     char buffer[BUF_SIZE];
     char* str = buffer;
     struct Pet* p;
