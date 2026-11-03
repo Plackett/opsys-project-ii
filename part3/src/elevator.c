@@ -179,14 +179,20 @@ int thread_run_elevator(void* param) {
     while( !(kthread_should_stop() && elevator->size == 0) ) {
         enum ElevatorState new_state = elevator_algorithm(elevator);
 
+        // Set new state
         if(!mutex_lock_interruptible(&elevator->mutex)) {
             elevator->state = new_state;
-            elevator->scan = elevator->state;
             mutex_unlock(&elevator->mutex);
         }
+        // Wait
         ssleep(2);
-        if(elevator->state != IDLE)
-            elevator->floor += elevator->state == UP ? 1 : -1;
+        // Set scan dir & increment floor
+        if(!mutex_lock_interruptible(&elevator->mutex)) {
+            if(elevator->state != IDLE)
+                elevator->scan = elevator->state;
+                elevator->floor += elevator->state == UP ? 1 : -1;
+            mutex_unlock(&elevator->mutex);
+        }
     }
     if(!mutex_lock_interruptible(&elevator->mutex)) {
         elevator->state = OFFLINE;
