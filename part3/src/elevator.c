@@ -202,7 +202,7 @@ int start_elevator(void) {
 int issue_request(int start_floor, int destination_floor, int type) {
     if(start_floor < 1 || start_floor > 5 || destination_floor < 1 || destination_floor > 5 || type < 0 || type > 3) return 1;
     struct Pet* pet;
-    pet = kmalloc(sizeof(struct Pet), __GFP_RECLAIM);
+    pet = kmalloc(sizeof(struct Pet), GFP_KERNEL);
     if(pet == NULL) return -ENOMEM; // failed memory initailizations should return ENOMEM
     switch(type) {
         case 0:
