@@ -383,7 +383,7 @@ static void __exit elevator_exit(void) {
     STUB_stop_elevator = NULL;
 
     if (elevator.size != 0) {
-        list_for_each_entry_safe(item, temp, elevator.head, node) {
+        list_for_each_entry_safe(item, temp, &elevator.head, node) {
             list_del(&item->node);
             kfree(item);
         }
