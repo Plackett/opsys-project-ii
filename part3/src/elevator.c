@@ -99,7 +99,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
 
     // If stopping, don't consider other factors.
-    if(elevator->deactivating){
+    if(kthread_should_stop()){
         if(elevator->state == LOADING) ssleep(1);
         if(elevator->size == 0)
             return IDLE;
@@ -198,9 +198,10 @@ int thread_run_elevator(void* param) {
     }
     if(!mutex_lock_interruptible(&elevator->mutex)) {
         elevator->state = OFFLINE;
+        elevator->deactivating = false;
+        elevator->kthread = NULL;
         mutex_unlock(&elevator->mutex);
     }
-    elevator->deactivating = false;
     return 0;
 
 }
@@ -208,7 +209,7 @@ int thread_run_elevator(void* param) {
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
 int start_elevator(void) {
-    if(elevator.state != OFFLINE) return 1;
+    if(elevator.kthread != NULL) return 1;
 
     elevator.state = IDLE;
     elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
