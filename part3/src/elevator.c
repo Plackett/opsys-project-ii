@@ -94,6 +94,8 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
             }
             mutex_unlock(&elevator->mutex);
         }
+        if(elevator->size != 0)
+            continue_scanning = true;
     }
 
     // If stopping, don't consider other factors.
@@ -125,7 +127,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                 }
             }
         }
-    }
+    } 
     if(continue_scanning)
         next_dir = elevator->scan;
     else {
