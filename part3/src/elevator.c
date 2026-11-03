@@ -176,27 +176,24 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
 // The function ran by kthread_run, main elevator loop
 int thread_run_elevator(void* param) {
     struct Elevator* elevator = param;
-    while(!kthread_should_stop() && elevator->size != 0) {
+    while( !(kthread_should_stop() && elevator->size == 0) ) {
         enum ElevatorState new_state = elevator_algorithm(elevator);
 
         if(!mutex_lock_interruptible(&elevator->mutex)) {
             elevator->state = new_state;
-            switch(elevator->state) {
-                case UP:
-                case DOWN:
-                    elevator->floor += elevator->state == UP ? 1 : -1;
-                    elevator->scan = elevator->state;
-            }
+            elevator->scan = elevator->state;
             mutex_unlock(&elevator->mutex);
         }
-
         ssleep(2);
+        if(elevator->state != IDLE)
+            elevator->floor += elevator->state == UP ? 1 : -1;
     }
     if(!mutex_lock_interruptible(&elevator->mutex)) {
         elevator->state = OFFLINE;
         mutex_unlock(&elevator->mutex);
     }
     return 0;
+
 }
 
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
