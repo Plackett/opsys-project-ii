@@ -105,9 +105,9 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
 
     // If pets could be waiting in scan dir (unless pets need to be dropped of in scan dir)...
-    if(elevator->size == 0 && elevator-> floor != (elevator->scan == UP ? 5:1)) {
+    if(elevator->size == 0 && elevator->floor != (elevator->scan == UP ? 5:1)) {
         // ...for remaining floors in scan direction (including current floor)...
-        for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+        for(int i = elevator->floor; elevator->scan == UP ? i <= 5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
             if(floor[i].size != 0) {
                 struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
                 // ...pet at elevator's floor needs to go in scan direciton?
@@ -176,6 +176,8 @@ int thread_run_elevator(void* param) {
 
         while(mutex_lock_interruptible(&elevator->mutex)) {;}
         elevator->state = new_state;
+        if (elevator->state != idle)
+            elevator->floor += elevator->state == UP ? 1 : -1;
         mutex_unlock(&elevator->mutex);
 
         ssleep(2);
@@ -297,9 +299,9 @@ static ssize_t procfile_read(struct file* file,
         while(mutex_lock_interruptible(&floor[i].mutex)) {;}
 
     str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string());
-    str += snprintf(str, buf_left(), " Current floor: %d", elevator.floor);
-    str += snprintf(str, buf_left(), " Current load: %d lbs", elevator.weight);
-    str += snprintf(str, buf_left(), " Elevator status:");
+    str += snprintf(str, buf_left(), "\nCurrent floor: %d", elevator.floor);
+    str += snprintf(str, buf_left(), "\nCurrent load: %d lbs", elevator.weight);
+    str += snprintf(str, buf_left(), "\nElevator status:");
     list_for_each_entry(p, &elevator.head, node) {
         str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
         pets++;
@@ -380,8 +382,14 @@ static void __exit elevator_exit(void) {
     STUB_issue_request = NULL;
     STUB_stop_elevator = NULL;
 
-    for(int i = 1; i < 6; i++) {
+    if elevator.size != 0 {
+        list_for_each_entry_safe(item, temp, elevator.head, node) {
+            list_del(&item->node);
+            kfree(item);
+        }
+    }
 
+    for(int i = 1; i < 6; i++) {
         // list_for_each_entry_safe(struct list_head* pos, struct list_head* head, member);
         list_for_each_entry_safe(item, temp, &floor[i].head, node) {
             // void list_del(struct list_head *entry);
