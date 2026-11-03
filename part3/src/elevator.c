@@ -317,8 +317,7 @@ static ssize_t procfile_read(struct file* file,
     if(buf_left() > 0)
         str += snprintf(str, buf_left(), " Number of pets serviced: %d", elevator.serviced);
 
-    //copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
-    copy_to_user(ubuf, buffer, 100);
+    copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
 
     mutex_unlock(&elevator.mutex);
     for(int i = 1; i <= 5; i++)
