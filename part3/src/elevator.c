@@ -304,18 +304,18 @@ static ssize_t procfile_read(struct file* file,
     for(int i = 1; i <= 5; i++) {
         pets_waiting += floor[i].size;
         if(buf_left() > 0)
-            str += snprintf(str, buf_left(), " [%c] Floor %d: %d",
+            str += snprintf(str, buf_left(), "\n[%c] Floor %d: %d",
                     elevator.floor == i ? '*' : ' ', i, floor[i].size);
         list_for_each_entry(p, &floor[i].head, node)
             if(buf_left() > 0)
                 str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
     }
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets: %d", pets);
+        str += snprintf(str, buf_left(), "\nNumber of pets: %d", pets);
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets waiting: %d", pets_waiting);
+        str += snprintf(str, buf_left(), "\nNumber of pets waiting: %d", pets_waiting);
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), " Number of pets serviced: %d", elevator.serviced);
+        str += snprintf(str, buf_left(), "\nNumber of pets serviced: %d", elevator.serviced);
 
     copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
 
