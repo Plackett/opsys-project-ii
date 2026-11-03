@@ -86,30 +86,30 @@ char* state_as_string(void) {
 // Tells the elevator to go up or down.
 // Driven by the question "Do I keep scanning?"
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
+    // Goals:
+    // - Never pickup a pet whose dest is not in scan dir => will be empty at inflection point
     bool continue_scanning = false;
     bool pets_waiting = false;
 
     // If not empty...
     if(elevator->size != 0) {
         struct Pet *p, *dummy;
-        bool unloaded = false;
         
         // ...check if pets in elevator...
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
             // ...need to unload?
             if(p->dest == elevator->floor) {
-                unloaded = true;
                 elevator->state = LOADING;
                 list_del(&p->node);
                 kfree(p);
                 elevator->size--;
             }
+            /*
             // ...need elevator to keep scanning?
-            else if ( (elevator->scan == UP && elevator->floor < p->dest) 
-                    ||(elevator->scan == DOWN && elevator->floor > p->dest)) {
+            else if (elevator->scan == UP ? elevator->floor < p->dest : elevator->floor > p->dest)
                 continue_scanning = true;
-            }
+                */
         }
         mutex_unlock(&elevator->mutex);
     }
