@@ -164,7 +164,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                 elevator->state = LOADING;
                 list_move(&p->node, &elevator->head);
                 floor[elevator->floor].size--;
-                elevator->weight += pet->type;
+                elevator->weight += p->type;
                 elevator->size++;
             }
         }
