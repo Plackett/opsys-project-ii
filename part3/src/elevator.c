@@ -17,6 +17,8 @@ MODULE_VERSION("0.1");
 #define PERMS 0444
 #define PARENT NULL
 #define BUF_SIZE 10000
+#define ELV_MAX_PETS 5
+#define ELV_MAX_WEIGHT 50
 
 int start_elevator(void);                                                           // starts the elevator to pick up and drop off passengers
 int issue_request(int start_floor, int destination_floor, int type);                // add passengers requests to specific floors
@@ -83,13 +85,13 @@ char* state_as_string(void) {
     return "ERR";
 }
 
-// Tells the elevator to go up or down.
-// Driven by the question "Do I keep scanning?"
+// Tells the elevator to go up, down, or to idle.
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     // Goals:
     // - Never pickup a pet whose dest is not in scan dir => will be empty at inflection point
+    enum ElevatorState next_dir;
     bool continue_scanning = false;
-    bool pets_waiting = false;
+    bool pets_waiting_opposite = false;
 
     // If not empty...
     if(elevator->size != 0) {
@@ -101,39 +103,84 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
             // ...need to unload?
             if(p->dest == elevator->floor) {
                 elevator->state = LOADING;
+                elevator->size--;
+                elevator->weight -= p->type;
                 list_del(&p->node);
                 kfree(p);
-                elevator->size--;
             }
-            /*
-            // ...need elevator to keep scanning?
-            else if (elevator->scan == UP ? elevator->floor < p->dest : elevator->floor > p->dest)
-                continue_scanning = true;
-                */
         }
         mutex_unlock(&elevator->mutex);
     }
-    // If question unanswered (or if its impossible to keep scanning)...
-    if(!continue_scanning && elevator-> floor == (elevator->scan == UP ? 5:1)) {
+    // If pets could be waiting in scan dir (unless pets need to be dropped of in scan dir)...
+    if(elevator->size == 0 && elevator-> floor != (elevator->scan == UP ? 5:1)) {
         // ...for remaining floors in scan direction (including current floor)...
         for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
             if(floor[i].size != 0) {
                 struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
-                // ...is pet destination in scan direction?
-                if(elevator->scan == UP ? elevator->floor < p->dest : elevator->floor > p->dest) {
+                // ...pet at elevator's floor needs to go in scan direciton?
+                if(elevator->floor == i) {
+                    if (elevator->scan == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
+                        continue_scanning = true;
+                        break;
+                    }
+                }
+                // ...pet waiting in scan direction?
+                else {
                     continue_scanning = true;
                     break;
                 }
             }
         }
     }
+    if(continue_scanning)
+        next_dir = elevator->scan;
+    else {
+        // For floors opposite to scan direction (including current)...
+        for(int i = elevator->floor; elevator->scan == DOWN ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+            // ...are pets waiting?
+            if(floor[i].size != 0) {
+                pets_waiting_opposite = true;
+                break;
+            }
+        }
+        // If there are no pets waiting...
+        if(!pets_waiting_opposite)
+            next_dir = IDLE;
+        // There are pets waiting in the opposite direction...
+        else
+            next_dir = (elevator->scan == UP ? DOWN : UP); // swap direction
+    }
+    // If pets on floor...
+    if(floor[elevator->floor].size != 0) {
+        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+        while(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {;}
+        while(floor[elevator->floor].size != 0) {
+            struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
+            // ...need to go in same direction as elevator, and can be picked up...
+            if( elevator->size + 1 <= ELV_MAX_PETS &&
+                    elevator->weight + p->type <= ELV_MAX_WEIGHT &&
+                    next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
+                // ...then pick up pets
+                elevator->state = LOADING;
+                list_move(&pet->node, &elevator->head);
+                floor[elevator->floor].size--;
+                elevator->weight += pet->type;
+                elevator->size++;
+            }
+        }
+        mutex_unlock(&elevator->mutex);
+        mutex_unlock(&floor[elevator->floor].mutex);
+    }
     if (elevator->state == LOADING) ssleep(1);
+    return next_dir;
 }
 
 // The function ran by kthread_run, main elevator loop
 int thread_run_elevator(void* param) {
     struct elevator* elevator = param;
     while(!kthread_should_stop()) {
+        switch(elevator_algorithm(elevator)) {
+        }
     }
     return 0;
 }
