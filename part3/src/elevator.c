@@ -130,7 +130,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         next_dir = elevator->scan;
     else {
         // For floors opposite to scan direction (including current)...
-        for(int i = elevator->floor; elevator->scan == DOWN ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+        for(int i = elevator->floor; elevator->scan == DOWN ? i <=5 : i >= 1; i = elevator->scan == DOWN ? i+1 : i-1) {
             // ...are pets waiting?
             if(floor[i].size != 0) {
                 pets_waiting_opposite = true;
