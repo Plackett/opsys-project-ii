@@ -147,26 +147,26 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     // If pets on floor...
     if(floor[elevator->floor].size != 0) {
         if(!mutex_lock_interruptible(&elevator->mutex)) {
-                if(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
+            if(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
                 while(floor[elevator->floor].size != 0) {
-                struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
-                // ...need to go in same direction as elevator, and can be picked up...
-                if( elevator->size + 1 <= ELV_MAX_PETS &&
-                        elevator->weight + p->type <= ELV_MAX_WEIGHT &&
-                        next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
-                // ...then pick up pets
-                elevator->state = LOADING;
-                list_move_tail(&p->node, &elevator->head);
-                floor[elevator->floor].size--;
-                elevator->weight += p->type;
-                elevator->size++;
-                }
+                    struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
+                    // ...need to go in same direction as elevator, and can be picked up...
+                    if( elevator->size + 1 <= ELV_MAX_PETS &&
+                            elevator->weight + p->type <= ELV_MAX_WEIGHT &&
+                            next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
+                        // ...then pick up pets
+                        elevator->state = LOADING;
+                        list_move_tail(&p->node, &elevator->head);
+                        floor[elevator->floor].size--;
+                        elevator->weight += p->type;
+                        elevator->size++;
+                    }
                 }
                 mutex_unlock(&floor[elevator->floor].mutex);
-                }
-                mutex_unlock(&elevator->mutex);
-                }
-                }
+            }
+            mutex_unlock(&elevator->mutex);
+        }
+    }
     if (elevator->state == LOADING) ssleep(1);
     return next_dir;
 }
@@ -334,7 +334,7 @@ static ssize_t procfile_read(struct file* file,
     mutex_unlock(&elevator.mutex);
 }
 
-return BUF_SIZE < len() ? BUF_SIZE : len();
+return (BUF_SIZE < len() ? BUF_SIZE : len());
 }
 
 static const struct proc_ops procfile_fops = {
