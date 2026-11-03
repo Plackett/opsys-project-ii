@@ -86,31 +86,35 @@ char* state_as_string(void) {
 // Tells the elevator what to do next
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     bool continue_scanning = false;
+    bool pets_waiting = false;
+
+    // If not empty...
     if(elevator->size != 0) {
         struct Pet *p, *dummy;
-        bool loading = false;
+        bool unloaded = false;
         
+        // ...check if pets in elevator...
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
-            // Check if need to unload
+            // ...need to unload
             if(p->dest == elevator->floor) {
-                loading = true;
+                unloaded = true;
                 elevator->state = LOADING;
                 list_del(&p->node);
                 kfree(p);
                 elevator->size--;
             }
-            // Check if can keep scanning in the current direction
+            // ...need elevator to keep scanning
             else if ( (elevator->scan == UP && elevator->floor < p->dest) 
-                    ||(elevator->scan == down && elevator->floor > p->dest)) {
+                    ||(elevator->scan == DOWN && elevator->floor > p->dest)) {
                 continue_scanning = true;
             }
         }
         mutex_unlock(&elevator->mutex);
-        if(loading) ssleep(1);
     }
-    for(int i = 1; i <= 5; i++) {
+    for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
     }
+    if (elevator->state == LOADING) ssleep(1);
 }
 
 // The function ran by kthread_run, main elevator loop
