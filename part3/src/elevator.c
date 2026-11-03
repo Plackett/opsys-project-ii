@@ -83,7 +83,8 @@ char* state_as_string(void) {
     return "ERR";
 }
 
-// Tells the elevator what to do next
+// Tells the elevator to go up or down.
+// Driven by the question "Do I keep scanning?"
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     bool continue_scanning = false;
     bool pets_waiting = false;
@@ -112,10 +113,18 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         }
         mutex_unlock(&elevator->mutex);
     }
-    // Check remaining floors in scan direction (including current floor)
-    for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
-        if(floor[i].size != 0) {
-            struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
+    // If question unanswered (or if its impossible to keep scanning)...
+    if(!continue_scanning && elevator-> floor == (elevator->scan == UP ? 5:1)) {
+        // ...for remaining floors in scan direction (including current floor)...
+        for(int i = elevator->floor; elevator->scan == UP ? i <=5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+            if(floor[i].size != 0) {
+                struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
+                // ...is pet destination in scan direction?
+                if(elevator->scan == UP ? elevator->floor < p->dest : elevator->floor > p->dest) {
+                    continue_scanning = true;
+                    break;
+                }
+            }
         }
     }
     if (elevator->state == LOADING) ssleep(1);
