@@ -42,7 +42,31 @@ Part 3f: Scheduling Algorithm
 
 ## File Listing
 
+- part1
+    - empty.c
+    - empty.trace
+    - part1.c
+    - part1.trace
+    - Makefile
+- part2
+    - src
+        - my_timer.c
+    - Makefile
+- part3
+    - src
+        - elevator.c
+    - Makefile
+    - syscalls.c
+
 ## How to Compile and Run
+
+> [!NOTE]
+> You can compile individual parts using the Makefile in each part directory.
+
+1. Download the repo onto your machine.
+2. Ensure the kernel version is 6.16.12 and the appropriate calls are added.
+3. Install a C compiler and make on your machine.
+4. run `make` in the root directory to make everything.
 
 ## Development Logs
 
@@ -466,4 +490,11 @@ Part 3f: Scheduling Algorithm
  - Fri Oct 16 13:30:22 2026 -0400
 
     add readme and div of labor
+
+## Group Meetings
+
+- November 1st, 2026
+    - Pair programming
+- November 3rd, 2026
+    - Pair programming
 
