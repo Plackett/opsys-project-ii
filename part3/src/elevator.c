@@ -146,26 +146,27 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
     // If pets on floor...
     if(floor[elevator->floor].size != 0) {
-        if(!mutex_lock_interruptible(&elevator->mutex) &&
-                !mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
-            while(floor[elevator->floor].size != 0) {
+        if(!mutex_lock_interruptible(&elevator->mutex) {
+                if(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
+                while(floor[elevator->floor].size != 0) {
                 struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
                 // ...need to go in same direction as elevator, and can be picked up...
                 if( elevator->size + 1 <= ELV_MAX_PETS &&
                         elevator->weight + p->type <= ELV_MAX_WEIGHT &&
                         next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
-                    // ...then pick up pets
-                    elevator->state = LOADING;
-                    list_move_tail(&p->node, &elevator->head);
-                    floor[elevator->floor].size--;
-                    elevator->weight += p->type;
-                    elevator->size++;
+                // ...then pick up pets
+                elevator->state = LOADING;
+                list_move_tail(&p->node, &elevator->head);
+                floor[elevator->floor].size--;
+                elevator->weight += p->type;
+                elevator->size++;
                 }
-            }
-            mutex_unlock(&floor[elevator->floor].mutex);
-            mutex_unlock(&elevator->mutex);
-        }
-    }
+                }
+                mutex_unlock(&floor[elevator->floor].mutex);
+                }
+                mutex_unlock(&elevator->mutex);
+                }
+                }
     if (elevator->state == LOADING) ssleep(1);
     return next_dir;
 }
@@ -299,43 +300,41 @@ static ssize_t procfile_read(struct file* file,
     int buf_left(void) {return BUF_SIZE - len();}
 
     if(!mutex_lock_interruptible(&elevator.mutex)) {
-        for(int i = 1; i <= 5; i++)
+
+        str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string());
+        str += snprintf(str, buf_left(), "\nCurrent floor: %d", elevator.floor);
+        str += snprintf(str, buf_left(), "\nCurrent load: %d lbs", elevator.weight);
+        str += snprintf(str, buf_left(), "\nElevator status:");
+        list_for_each_entry(p, &elevator.head, node) {
+            str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
+            pets++;
+        }
+        for(int i = 1; i <= 5; i++) {
             if(!mutex_lock_interruptible(&floor[i].mutex)) {
-
-                str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string());
-                str += snprintf(str, buf_left(), "\nCurrent floor: %d", elevator.floor);
-                str += snprintf(str, buf_left(), "\nCurrent load: %d lbs", elevator.weight);
-                str += snprintf(str, buf_left(), "\nElevator status:");
-                list_for_each_entry(p, &elevator.head, node) {
-                    str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
-                    pets++;
-                }
-                for(int i = 1; i <= 5; i++) {
-                    pets_waiting += floor[i].size;
+                pets_waiting += floor[i].size;
+                if(buf_left() > 0)
+                    str += snprintf(str, buf_left(), "\n[%c] Floor %d: %d",
+                            elevator.floor == i ? '*' : ' ', i, floor[i].size);
+                list_for_each_entry(p, &floor[i].head, node)
                     if(buf_left() > 0)
-                        str += snprintf(str, buf_left(), "\n[%c] Floor %d: %d",
-                                elevator.floor == i ? '*' : ' ', i, floor[i].size);
-                    list_for_each_entry(p, &floor[i].head, node)
-                        if(buf_left() > 0)
-                            str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
-                }
-                if(buf_left() > 0)
-                    str += snprintf(str, buf_left(), "\nNumber of pets: %d", pets);
-                if(buf_left() > 0)
-                    str += snprintf(str, buf_left(), "\nNumber of pets waiting: %d", pets_waiting);
-                if(buf_left() > 0)
-                    str += snprintf(str, buf_left(), "\nNumber of pets serviced: %d\n", elevator.serviced);
-
-                copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
-                *ppos += len();
-
-                for(int i = 1; i <= 5; i++)
-                    mutex_unlock(&floor[i].mutex);
+                        str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest);
+                mutex_unlock(&floor[i].mutex);
             }
-        mutex_unlock(&elevator.mutex);
-    }
+        }
+        if(buf_left() > 0)
+            str += snprintf(str, buf_left(), "\nNumber of pets: %d", pets);
+        if(buf_left() > 0)
+            str += snprintf(str, buf_left(), "\nNumber of pets waiting: %d", pets_waiting);
+        if(buf_left() > 0)
+            str += snprintf(str, buf_left(), "\nNumber of pets serviced: %d\n", elevator.serviced);
 
-    return BUF_SIZE < len() ? BUF_SIZE : len();
+        copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
+        *ppos += len();
+    }
+    mutex_unlock(&elevator.mutex);
+}
+
+return BUF_SIZE < len() ? BUF_SIZE : len();
 }
 
 static const struct proc_ops procfile_fops = {
