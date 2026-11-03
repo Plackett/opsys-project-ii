@@ -87,8 +87,7 @@ char* state_as_string(void) {
 
 // Tells the elevator to go up, down, or to idle.
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
-    // Goals:
-    // - Never pickup a pet whose dest is not in scan dir => will be empty at inflection point
+    // Goal: - Never pickup a pet whose dest is not in scan dir => will be empty at inflection point
     enum ElevatorState next_dir;
     bool continue_scanning = false;
     bool pets_waiting_opposite = false;
@@ -111,6 +110,14 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         }
         mutex_unlock(&elevator->mutex);
     }
+    // If stopping, don't consider other factors.
+    if(kthread_should_stop()){
+        if(elevator->size == 0)
+            return IDLE;
+        else
+            return elevator->scan;
+    }
+
     // If pets could be waiting in scan dir (unless pets need to be dropped of in scan dir)...
     if(elevator->size == 0 && elevator-> floor != (elevator->scan == UP ? 5:1)) {
         // ...for remaining floors in scan direction (including current floor)...
@@ -179,8 +186,13 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
 int thread_run_elevator(void* param) {
     struct Elevator* elevator = param;
     while(!kthread_should_stop()) {
-        switch(elevator_algorithm(elevator)) {
-        }
+        enum ElevatorState new_state = elevator_algorithm(elevator);
+
+        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+        elevator->state = new_state;
+        mutex_unlock(&elevator->mutex);
+
+        ssleep(2);
     }
     return 0;
 }
@@ -240,6 +252,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
 int stop_elevator(void) {
     if(elevator.deactivating == true) return 1;
     if(elevator.state == OFFLINE) return 0;
+    kthread_stop(elevator.kthread);
     elevator.deactivating = true;
     return 0;
 }
