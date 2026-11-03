@@ -181,8 +181,10 @@ int thread_run_elevator(void* param) {
 
         if(!mutex_lock_interruptible(&elevator->mutex)) {
             elevator->state = new_state;
-            if (elevator->state != IDLE)
+            if (elevator->state != IDLE) {
                 elevator->floor += elevator->state == UP ? 1 : -1;
+                elevator->scan = elevator->state;
+            }
             mutex_unlock(&elevator->mutex);
         }
 
