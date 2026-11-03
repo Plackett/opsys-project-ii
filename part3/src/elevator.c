@@ -268,16 +268,15 @@ static ssize_t procfile_read(struct file* file,
         loff_t* ppos) {
     char buffer[BUF_SIZE];
     char* str = buffer;
-    int len(void) {return str - buffer;}
+    int buf_left(void) {return BUF_SIZE - (str - buffer);}
 
     while(!mutex_lock_interruptible(&elevator.mutex)) {;}
     for(int i = 1; i <= 5; i++)
         while(!mutex_lock_interruptible(&floor[i].mutex)) {;}
 
-    str += snprintf(str, ) - 1
+    str += snprintf(str, buf_left, "Elevator state: %s", state_as_string()) - 1
     
 
-    "Elevator state: <>";
     " Current floor: <>";
     " Current load: <> lbs;
     " Elevator status:";
