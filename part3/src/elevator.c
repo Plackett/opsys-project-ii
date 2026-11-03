@@ -80,7 +80,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         struct Pet *p, *dummy;
 
         // ...check if pets in elevator...
-        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+        while(mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
             // ...need to unload?
             if(p->dest == elevator->floor) {
@@ -145,8 +145,8 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
     // If pets on floor...
     if(floor[elevator->floor].size != 0) {
-        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
-        while(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {;}
+        while(mutex_lock_interruptible(&elevator->mutex)) {;}
+        while(mutex_lock_interruptible(&floor[elevator->floor].mutex)) {;}
         while(floor[elevator->floor].size != 0) {
             struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
             // ...need to go in same direction as elevator, and can be picked up...
@@ -174,13 +174,13 @@ int thread_run_elevator(void* param) {
     while(!kthread_should_stop() || elevator->size != 0) {
         enum ElevatorState new_state = elevator_algorithm(elevator);
 
-        while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+        while(mutex_lock_interruptible(&elevator->mutex)) {;}
         elevator->state = new_state;
         mutex_unlock(&elevator->mutex);
 
         ssleep(2);
     }
-    while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+    while(mutex_lock_interruptible(&elevator->mutex)) {;}
     elevator->state = OFFLINE;
     mutex_unlock(&elevator->mutex);
     return 0;
@@ -226,7 +226,7 @@ int issue_request(int start_floor, int destination_floor, int type) {
     // void list_add_tail(struct list_head *new, struct list_head *head);
 
     // Wait until lock aquired
-    while(!mutex_lock_interruptible(&floor[start_floor].mutex)) {;}
+    while(mutex_lock_interruptible(&floor[start_floor].mutex)) {;}
 
     list_add_tail(&pet->node, &floor[start_floor].head);
     floor[start_floor].size++;
@@ -289,9 +289,9 @@ static ssize_t procfile_read(struct file* file,
     int len(void) {return str - buffer;}
     int buf_left(void) {return BUF_SIZE - len();}
 
-    while(!mutex_lock_interruptible(&elevator.mutex)) {;}
+    while(mutex_lock_interruptible(&elevator.mutex)) {;}
     for(int i = 1; i <= 5; i++)
-        while(!mutex_lock_interruptible(&floor[i].mutex)) {;}
+        while(mutex_lock_interruptible(&floor[i].mutex)) {;}
 
     str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string()) - 1;
     str += snprintf(str, buf_left(), " Current floor: %d", elevator.floor) - 1;
