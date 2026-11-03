@@ -107,6 +107,16 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
             return elevator->scan;
     }
 
+    // Prevent heaven's stairway incedent
+    if(elevator->state == IDLE) {
+        switch (elevator->floor) {
+            case 1:
+                elevator->scan = UP;
+                break;
+            case 5:
+                elevator->scan = DOWN;
+        }
+    }
     // If pets could be waiting in scan dir (unless pets need to be dropped of in scan dir)...
     if(elevator->size == 0 && elevator->floor != (elevator->scan == UP ? 5:1)) {
         // ...for remaining floors in scan direction (including current floor)...
