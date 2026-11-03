@@ -160,7 +160,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                         floor[elevator->floor].size--;
                         elevator->weight += p->type;
                         elevator->size++;
-                    }
+                    } else break;
                 }
                 mutex_unlock(&floor[elevator->floor].mutex);
             }
