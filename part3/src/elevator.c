@@ -318,9 +318,9 @@ static ssize_t procfile_read(struct file* file,
 
     copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
 
-    mutex_unlock(&elevator->mutex);
+    mutex_unlock(&elevator.mutex);
     for(int i = 1; i <= 5; i++)
-        mutex_unlock(&floor[i]->mutex);
+        mutex_unlock(&floor[i].mutex);
     return BUF_SIZE < len() ? BUF_SIZE : len();
 }
 
