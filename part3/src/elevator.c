@@ -322,7 +322,7 @@ static ssize_t procfile_read(struct file* file,
     mutex_unlock(&elevator.mutex);
     for(int i = 1; i <= 5; i++)
         mutex_unlock(&floor[i].mutex);
-    return BUF_SIZE < len() ? BUF_SIZE : len();
+    return 0;
 }
 
 static const struct proc_ops procfile_fops = {
