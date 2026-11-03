@@ -25,12 +25,11 @@ Part 3b: Kernel Compilation
 
 
 Part 3c: Threads
-- Niko Krinos
 - Austin Works
 
 
 Part 3d: Linked List
-- Austin Works
+- Niko Krinos
 
 
 Part 3e: Mutexes
@@ -38,7 +37,7 @@ Part 3e: Mutexes
 
 
 Part 3f: Scheduling Algorithm
-- Niko Krinos
+- Austin Works
 
 ## File Listing
 
