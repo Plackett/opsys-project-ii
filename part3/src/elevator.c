@@ -155,7 +155,8 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                     // ...need to go in same direction as elevator, and can be picked up...
                     if( elevator->size + 1 <= ELV_MAX_PETS &&
                             elevator->weight + p->type <= ELV_MAX_WEIGHT &&
-                            next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
+                            (next_dir == UP ? 
+                             (elevator->floor < p->dest) : (elevator->floor > p->dest) ) ) {
                         // ...then pick up pets
                         elevator->state = LOADING;
                         list_move_tail(&p->node, &elevator->head);
@@ -199,6 +200,7 @@ int thread_run_elevator(void* param) {
         elevator->state = OFFLINE;
         mutex_unlock(&elevator->mutex);
     }
+    elevator->deactivating = false;
     return 0;
 
 }
