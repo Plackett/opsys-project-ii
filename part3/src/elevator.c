@@ -162,7 +162,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
                     next_dir == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
                 // ...then pick up pets
                 elevator->state = LOADING;
-                list_move(&pet->node, &elevator->head);
+                list_move(&p->node, &elevator->head);
                 floor[elevator->floor].size--;
                 elevator->weight += pet->type;
                 elevator->size++;
