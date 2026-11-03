@@ -282,6 +282,7 @@ static ssize_t procfile_read(struct file* file,
         loff_t* ppos) {
     if(*ppos > 0)
         return 0;
+
     char buffer[BUF_SIZE];
     char* str = buffer;
     struct Pet* p;
@@ -324,7 +325,7 @@ static ssize_t procfile_read(struct file* file,
     mutex_unlock(&elevator.mutex);
     for(int i = 1; i <= 5; i++)
         mutex_unlock(&floor[i].mutex);
-    return 0;
+    return BUF_SIZE < len() ? BUF_SIZE : len();
 }
 
 static const struct proc_ops procfile_fops = {
