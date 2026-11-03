@@ -146,7 +146,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
     // If pets on floor...
     if(floor[elevator->floor].size != 0) {
-        if(!mutex_lock_interruptible(&elevator->mutex) {
+        if(!mutex_lock_interruptible(&elevator->mutex)) {
                 if(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
                 while(floor[elevator->floor].size != 0) {
                 struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
