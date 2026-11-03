@@ -272,7 +272,7 @@ char* pet_as_string(struct Pet* pet) {
         case CHIHUAHUA:
             return "C";
     }
-    return "ERR"
+    return "ERR";
 }
 
 // called when reading /proc/elevator
