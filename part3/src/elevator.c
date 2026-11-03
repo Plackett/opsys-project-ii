@@ -315,7 +315,7 @@ static ssize_t procfile_read(struct file* file,
     if(buf_left() > 0)
         str += snprintf(str, buf_left(), "\nNumber of pets waiting: %d", pets_waiting);
     if(buf_left() > 0)
-        str += snprintf(str, buf_left(), "\nNumber of pets serviced: %d", elevator.serviced);
+        str += snprintf(str, buf_left(), "\nNumber of pets serviced: %d\n", elevator.serviced);
 
     copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
 
