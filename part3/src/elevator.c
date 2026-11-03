@@ -155,7 +155,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         while(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {;}
         while(floor[elevator->floor].size != 0) {
-            struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
+            struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
             // ...need to go in same direction as elevator, and can be picked up...
             if( elevator->size + 1 <= ELV_MAX_PETS &&
                     elevator->weight + p->type <= ELV_MAX_WEIGHT &&
