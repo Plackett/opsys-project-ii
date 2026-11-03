@@ -10,3 +10,6 @@ all:
 
 	# trace five syscall program
 	strace -o part1.trace ./part1
+clean:
+	rm part1;
+	rm empty;
