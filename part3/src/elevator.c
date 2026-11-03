@@ -176,7 +176,7 @@ int thread_run_elevator(void* param) {
 
         while(mutex_lock_interruptible(&elevator->mutex)) {;}
         elevator->state = new_state;
-        if (elevator->state != idle)
+        if (elevator->state != IDLE)
             elevator->floor += elevator->state == UP ? 1 : -1;
         mutex_unlock(&elevator->mutex);
 
@@ -382,7 +382,7 @@ static void __exit elevator_exit(void) {
     STUB_issue_request = NULL;
     STUB_stop_elevator = NULL;
 
-    if elevator.size != 0 {
+    if (elevator.size != 0) {
         list_for_each_entry_safe(item, temp, elevator.head, node) {
             list_del(&item->node);
             kfree(item);
