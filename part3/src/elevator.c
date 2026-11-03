@@ -268,10 +268,11 @@ static ssize_t procfile_read(struct file* file,
         loff_t* ppos) {
     char buffer[BUF_SIZE];
     char* str = buffer;
+    int len(void) {return str - buffer;}
 
-    while(!mutex_lock_interruptible(&elevator->mutex)) {;}
+    while(!mutex_lock_interruptible(&elevator.mutex)) {;}
     for(int i = 1; i <= 5; i++)
-        while(!mutex_lock_interruptible(&floor[i]->mutex)) {;}
+        while(!mutex_lock_interruptible(&floor[i].mutex)) {;}
 
     str += snprintf(str, ) - 1
     
