@@ -57,6 +57,8 @@ Part 3f: Scheduling Algorithm
         - elevator.c
     - Makefile
     - syscalls.c
+- Makefile
+- README.md
 
 ## How to Compile and Run
 
@@ -71,6 +73,7 @@ Part 3f: Scheduling Algorithm
 ## Development Logs
 
 ### Mason Simmons
+ 
  - Thu Oct 29 22:22:52 2026 -0400
 
     commented the code
@@ -86,7 +89,9 @@ Part 3f: Scheduling Algorithm
  - Tue Oct 27 16:20:17 2026 -0400
 
     Added part 3 test files
+
 ### Niko Krinos
+
  - Tue Nov 3 11:10:21 2026 -0500
 
     testing issue_request syscall
@@ -154,7 +159,9 @@ Part 3f: Scheduling Algorithm
  - Fri Oct 16 13:30:22 2026 -0400
 
     add readme and div of labor
+
 ### Austin Works
+
  - Tue Nov 3 11:18:46 2026 -0500
 
     fix(elevator): various fixes
