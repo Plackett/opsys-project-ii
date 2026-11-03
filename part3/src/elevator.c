@@ -187,11 +187,12 @@ int thread_run_elevator(void* param) {
         // Wait
         ssleep(2);
         // Set scan dir & increment floor
-        if(!mutex_lock_interruptible(&elevator->mutex)) {
-            if(elevator->state != IDLE)
-                elevator->scan = elevator->state;
-                elevator->floor += elevator->state == UP ? 1 : -1;
-            mutex_unlock(&elevator->mutex);
+        if(new_state != IDLE) {
+            if(!mutex_lock_interruptible(&elevator->mutex)) {
+                elevator->scan = new_state;
+                elevator->floor += (new_state == UP ? 1 : -1);
+                mutex_unlock(&elevator->mutex);
+            }
         }
     }
     if(!mutex_lock_interruptible(&elevator->mutex)) {
