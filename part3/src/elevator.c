@@ -78,7 +78,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     // If not empty...
     if(elevator->size != 0) {
         struct Pet *p, *dummy;
-        
+
         // ...check if pets in elevator...
         while(!mutex_lock_interruptible(&elevator->mutex)) {;}
         list_for_each_entry_safe(p,dummy,&elevator->head, node) {
@@ -261,6 +261,19 @@ char* state_as_string(void) {
     return "ERR";
 }
 
+char* pet_as_string(struct Pet* pet) {
+    switch(pet->type) {
+        case PUG:
+            return "P";
+        case PUGHUAHUA:
+            return "H";
+        case DACHSHUND:
+            return "D";
+        case CHIHUAHUA:
+            return "C";
+    }
+}
+
 // called when reading /proc/elevator
 static ssize_t procfile_read(struct file* file, 
         char* ubuf,
@@ -268,29 +281,47 @@ static ssize_t procfile_read(struct file* file,
         loff_t* ppos) {
     char buffer[BUF_SIZE];
     char* str = buffer;
-    int buf_left(void) {return BUF_SIZE - (str - buffer);}
+    struct Pet* p;
+    int pets = 0;
+    int pets_waiting = 0;
+
+    int len(void) {return str - buffer;}
+    int buf_left(void) {return BUF_SIZE - len();}
 
     while(!mutex_lock_interruptible(&elevator.mutex)) {;}
     for(int i = 1; i <= 5; i++)
         while(!mutex_lock_interruptible(&floor[i].mutex)) {;}
 
-    str += snprintf(str, buf_left, "Elevator state: %s", state_as_string()) - 1
-    
+    str += snprintf(str, buf_left(), "Elevator state: %s", state_as_string()) - 1;
+    str += snprintf(str, buf_left(), " Current floor: %d", elevator.floor) - 1;
+    str += snprintf(str, buf_left(), " Current load: %d lbs", elevator.weight) - 1;
+    str += snprintf(str, buf_left(), " Elevator status:") - 1;
+    list_for_each_entry(p, &elevator.head, node) {
+        str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest) - 1;
+        pets++;
+    }
+    for(int i = 1; i <= 5; i++) {
+        pets_waiting += floor[i].size;
+        if(buf_left() > 0)
+            str += snprintf(str, buf_left(), " [%c] Floor %d: %d",
+                    elevator.floor == i ? '*' : ' ', i, floor[i].size) - 1;
+        list_for_each_entry(p, &floor[i].head, node)
+            if(buf_left() > 0)
+                str += snprintf(str, buf_left(), " %s%d", pet_as_string(p), p->dest) - 1;
+    }
+    if(buf_left() > 0)
+        str += snprintf(str, buf_left(), " Number of pets: %d", pets) - 1;
+    if(buf_left() > 0)
+        str += snprintf(str, buf_left(), " Number of pets waiting: %d", pets_waiting) - 1;
+    if(buf_left() > 0)
+        str += snprintf(str, buf_left(), " Number of pets serviced: %d", elevator.serviced) - 1;
 
-    " Current floor: <>";
-    " Current load: <> lbs;
-    " Elevator status:";
-    " CDPH";
-    " [<>] Floor <>: <num>";
-    " CDPH";
-    " Number of pets:";
-    " Numer of pets waiting: <>";
-    " Number of pets serviced: <>";
+    copy_to_user(ubuf, buffer, BUF_SIZE < len() ? BUF_SIZE : len());
 
     mutex_unlock(&elevator->mutex);
     for(int i = 1; i <= 5; i++)
         mutex_unlock(&floor[i]->mutex);
-    return 0;
+    return BUF_SIZE < len() ? BUF_SIZE : len();
 }
 
 static const struct proc_ops procfile_fops = {
