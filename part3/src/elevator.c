@@ -200,6 +200,7 @@ int start_elevator(void) {
 // issue request adds a pet to the list for that floor it is on and stores their destination and pet type
 // kmalloc could potentially fail here
 int issue_request(int start_floor, int destination_floor, int type) {
+    return 0;
     if(start_floor < 1 || start_floor > 5 || destination_floor < 1 || destination_floor > 5 || type < 0 || type > 3) return 1;
     struct Pet* pet;
     pet = kmalloc(sizeof(struct Pet), __GFP_RECLAIM);
