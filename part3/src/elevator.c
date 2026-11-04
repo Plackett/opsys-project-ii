@@ -219,10 +219,11 @@ int thread_run_elevator(void* param) {
 // it also resets the deactivating flag to false
 int start_elevator(void) {
     if(elevator.state != OFFLINE) return 1;
-
-    elevator.state = IDLE;
-    elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
-
+    if(!mutex_lock_interruptible(&elevator->mutex)) {
+        elevator.state = IDLE;
+        elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
+        mutex_unlock(&elevator->mutex);
+    }
     return 0;
 }
 
@@ -269,8 +270,11 @@ int issue_request(int start_floor, int destination_floor, int type) {
 int stop_elevator(void) {
     if(elevator.deactivating == true) return 1;
     if(elevator.state == OFFLINE) return 0;
-    kthread_stop(elevator.kthread);
-    elevator.deactivating = true;
+    if(!mutex_lock_interruptible(&elevator->mutex)) {
+        elevator.deactivating = true;
+        kthread_stop(elevator.kthread);
+        mutex_unlock(&elevator->mutex);
+    }
     return 0;
 }
 
