@@ -99,7 +99,7 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     }
 
     // If stopping, don't consider other factors.
-    if(kthread_should_stop()){
+    if(elevator->deactivating){
         if(elevator->state == LOADING) ssleep(1);
         if(elevator->size == 0)
             return IDLE;
