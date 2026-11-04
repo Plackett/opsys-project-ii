@@ -207,9 +207,8 @@ int thread_run_elevator(void* param) {
         }
     }
     if(!mutex_lock_interruptible(&elevator->mutex)) {
-        elevator->state = OFFLINE;
         elevator->deactivating = false;
-        elevator->kthread = NULL;
+        elevator->state = OFFLINE;
         mutex_unlock(&elevator->mutex);
     }
     return 0;
@@ -219,7 +218,7 @@ int thread_run_elevator(void* param) {
 // start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
 // it also resets the deactivating flag to false
 int start_elevator(void) {
-    if(elevator.kthread != NULL) return 1;
+    if(elevator.state != OFFLINE) return 1;
 
     elevator.state = IDLE;
     elevator.kthread = kthread_run(thread_run_elevator, &elevator, "elevator");
