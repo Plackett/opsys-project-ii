@@ -261,6 +261,9 @@ int issue_request(int start_floor, int destination_floor, int type) {
         floor[start_floor].size++;
 
         mutex_unlock(&floor[start_floor].mutex);
+    } else {
+        kfree(pet);
+        pet = NULL;
     }
     return 0;
 }
