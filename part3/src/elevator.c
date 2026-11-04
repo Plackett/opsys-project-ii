@@ -272,9 +272,9 @@ int stop_elevator(void) {
     if(elevator.state == OFFLINE) return 0;
     if(!mutex_lock_interruptible(&elevator.mutex)) {
         elevator.deactivating = true;
-        kthread_stop(elevator.kthread);
         mutex_unlock(&elevator.mutex);
     }
+    kthread_stop(elevator.kthread);
     return 0;
 }
 
