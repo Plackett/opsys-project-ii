@@ -412,12 +412,6 @@ static void __exit elevator_exit(void) {
     STUB_issue_request = NULL;
     STUB_stop_elevator = NULL;
     stop_elevator();
-    if (elevator.size != 0) {
-        list_for_each_entry_safe(item, temp, &elevator.head, node) {
-            list_del(&item->node);
-            kfree(item);
-        }
-    }
 
     for(int i = 1; i < 6; i++) {
         // list_for_each_entry_safe(struct list_head* pos, struct list_head* head, member);
