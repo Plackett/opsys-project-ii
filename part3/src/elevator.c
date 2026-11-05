@@ -21,9 +21,9 @@ MODULE_VERSION("0.1");
 #define ELV_MAX_PETS 5
 #define ELV_MAX_WEIGHT 50
 
-int start_elevator(void);                                                           // starts the elevator to pick up and drop off passengers
-int issue_request(int start_floor, int destination_floor, int type);                // add passengers requests to specific floors
-int stop_elevator(void);                                                            // stops the elevator
+int start_elevator(void);
+int issue_request(int start_floor, int destination_floor, int type);
+int stop_elevator(void);
 
 extern int (*STUB_start_elevator)(void);
 extern int (*STUB_issue_request)(int,int,int);
@@ -35,7 +35,7 @@ static struct proc_dir_entry *proc_entry;
 enum PetType { CHIHUAHUA = 3, PUG = 14, PUGHUAHUA = 10, DACHSHUND = 16 };
 
 struct Pet {
-    struct list_head node; // this is from list.h and just has two list_heads of its own, one for prev and one for next
+    struct list_head node;
     enum PetType type;
     int dest;
 };
@@ -70,7 +70,8 @@ struct Elevator elevator;
 
 // Tells the elevator to go up, down, or to idle.
 enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
-    // Goal: - Never pickup a pet whose dest is not in scan dir => will be empty at inflection point
+    // Goal: - Never pickup a pet whose dest is not in 
+    // scan dir => will be empty at inflection point
     enum ElevatorState next_dir;
     bool continue_scanning = false;
     bool pets_waiting_opposite = false;
@@ -120,12 +121,14 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
     // If pets could be waiting in scan dir (unless pets need to be dropped of in scan dir)...
     if(elevator->size == 0 && elevator->floor != (elevator->scan == UP ? 5:1)) {
         // ...for remaining floors in scan direction (including current floor)...
-        for(int i = elevator->floor; elevator->scan == UP ? i <= 5 : i >= 1; i = elevator->scan == UP ? i+1 : i-1) {
+        for(int i = elevator->floor; elevator->scan == UP ? i <= 5 : i >= 1;
+                i = elevator->scan == UP ? i+1 : i-1) {
             if(floor[i].size != 0) {
                 struct Pet* p = list_first_entry(&floor[i].head, struct Pet, node);
                 // ...pet at elevator's floor needs to go in scan direciton?
                 if(elevator->floor == i) {
-                    if (elevator->scan == UP ? (elevator->floor < p->dest) : (elevator->floor > p->dest)) {
+                    if (elevator->scan == UP ? (elevator->floor < p->dest) :
+                            (elevator->floor > p->dest)) {
                         continue_scanning = true;
                         break;
                     }
@@ -142,7 +145,8 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         next_dir = elevator->scan;
     else {
         // For floors opposite to scan direction (including current)...
-        for(int i = elevator->floor; elevator->scan == DOWN ? i <=5 : i >= 1; i = elevator->scan == DOWN ? i+1 : i-1) {
+        for(int i = elevator->floor; elevator->scan == DOWN ? i <=5 : i >= 1;
+                i = elevator->scan == DOWN ? i+1 : i-1) {
             // ...are pets waiting?
             if(floor[i].size != 0) {
                 pets_waiting_opposite = true;
@@ -161,7 +165,8 @@ enum ElevatorState elevator_algorithm(struct Elevator* elevator) {
         if(!mutex_lock_interruptible(&elevator->mutex)) {
             if(!mutex_lock_interruptible(&floor[elevator->floor].mutex)) {
                 while(floor[elevator->floor].size != 0) {
-                    struct Pet* p = list_first_entry(&floor[elevator->floor].head, struct Pet, node);
+                    struct Pet* p = list_first_entry(&floor[elevator->floor].head,
+                            struct Pet, node);
                     // ...need to go in same direction as elevator, and can be picked up...
                     if( elevator->size + 1 <= ELV_MAX_PETS &&
                             elevator->weight + p->type <= ELV_MAX_WEIGHT &&
@@ -215,8 +220,8 @@ int thread_run_elevator(void* param) {
 
 }
 
-// start elevator sets the state to IDLE if the elevator is offline and returns an error (1) if the elevator has already been started
-// it also resets the deactivating flag to false
+// start elevator sets the state to IDLE if the elevator is offline and returns an error (1)
+// if the elevator has already been started. it also resets the deactivating flag to false
 int start_elevator(void) {
     if(elevator.state != OFFLINE) return 1;
     if(!mutex_lock_interruptible(&elevator.mutex)) {
@@ -227,10 +232,12 @@ int start_elevator(void) {
     return 0;
 }
 
-// issue request adds a pet to the list for that floor it is on and stores their destination and pet type
-// kmalloc could potentially fail here
+// issue request adds a pet to the list for that floor it is on and stores their destination
+// and pet type kmalloc could potentially fail here
 int issue_request(int start_floor, int destination_floor, int type) {
-    if(start_floor < 1 || start_floor > 5 || destination_floor < 1 || destination_floor > 5 || type < 0 || type > 3) return 1;
+    if(start_floor < 1 || start_floor > 5 || destination_floor < 1 ||
+            destination_floor > 5 || type < 0 || type > 3)
+        return 1;
     struct Pet* pet;
     pet = kmalloc(sizeof(struct Pet), GFP_KERNEL);
     if(pet == NULL) return -ENOMEM; // failed memory initailizations should return ENOMEM
@@ -268,8 +275,8 @@ int issue_request(int start_floor, int destination_floor, int type) {
     return 0;
 }
 
-// stop elevator just triggers the deactivating flag and returns an error(1) if its already deactivating when called
-// if the elevator is already offline it won't do anything
+// stop elevator just triggers the deactivating flag and returns an error(1)
+// if its already deactivating when called, f the elevator is already offline it won't do anything
 int stop_elevator(void) {
     if(elevator.deactivating == true) return 1;
     if(elevator.state == OFFLINE) return 0;
