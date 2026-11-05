@@ -75,7 +75,7 @@ Part 3f: Scheduling Algorithm
  
  - Thu Oct 29 22:22:52 2026 -0400
 
-    commented the code
+    commented code for my_timer.ko
 
  - Thu Oct 29 20:24:15 2026 -0400
 
@@ -87,7 +87,11 @@ Part 3f: Scheduling Algorithm
 
  - Tue Oct 27 16:20:17 2026 -0400
 
-    Added part 3 test files
+    Added part 3 test files (and confirmed kernel has syscalls shortly after)
+
+ - Sun Oct 25 22:28:00 2026 -0400
+
+    Began compiling the kernel after adding elevator syscalls to kernel
 
 ### Niko Krinos
 
